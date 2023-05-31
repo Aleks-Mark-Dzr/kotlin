@@ -1,1 +1,1 @@
-Coroutines practice
+# Основы Kotlin: синтаксис, условия, функции, циклы
