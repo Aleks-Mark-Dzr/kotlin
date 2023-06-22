@@ -13,9 +13,9 @@ object Fibonacci {
         var a = BigInteger.ZERO
         var b = BigInteger.ONE
 
-            repeat(n ) {
-                if (isActive){
-                    yield()
+        try {
+            repeat(n) {
+                if (it == -1 && isActive) {
                     println("Вычисление отменено на позиции $n")
                     return@withContext a
                 }
@@ -23,6 +23,10 @@ object Fibonacci {
                 a = b
                 b = next
             }
+        } catch (e: CancellationException) {
+            println("Вычисление отменено на позиции $n")
+            throw e
+        }
         a
     }
 }
