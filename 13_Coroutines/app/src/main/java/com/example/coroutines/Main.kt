@@ -1,35 +1,49 @@
 package com.example.coroutines
 
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import java.math.BigInteger
 
 object Fibonacci {
-    suspend fun take(n: Int): Long {
-        val sqrt5 = Math.sqrt(5.0)
-        val phi = (1 + sqrt5) / 2
+    suspend fun take(n: Int): BigInteger = withContext(Dispatchers.Default) {
+        if (n <= 0) throw IllegalArgumentException("Неверная позиция: $n")
 
-        return ((Math.pow(phi, n.toDouble()) - Math.pow(-phi, -n.toDouble())) / sqrt5).toLong()
+        var a = BigInteger.ZERO
+        var b = BigInteger.ONE
+
+        try {
+            repeat(n ) {
+                yield()
+                val next = a + b
+                a = b
+                b = next
+            }
+        } catch (e: CancellationException) {
+            println("Вычисление отменено на позиции $n")
+            throw e
+        }
+        a
     }
 }
 
 
-suspend fun main() {
+fun main() {
     runBlocking {
         launch {
-            val n = 5
+            val n = 15
             val fibonacciNumber = Fibonacci.take(n)
-            println("Fibonacci number at position $n is: $fibonacciNumber")
+            println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
         launch {
             val n = 10
             val fibonacciNumber = Fibonacci.take(n)
-            println("Fibonacci number at position $n is: $fibonacciNumber")
+            println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
         launch {
-            val n = 15
+            val n = 0
             val fibonacciNumber = Fibonacci.take(n)
-            println("Fibonacci number at position $n is: $fibonacciNumber")
+            println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
+        delay(500) // Позволяет некоторое время для выполнения корутин
+        coroutineContext.cancelChildren() // Отменить все корутины
     }
 }
