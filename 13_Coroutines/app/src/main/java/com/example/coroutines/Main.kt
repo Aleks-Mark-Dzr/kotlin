@@ -4,25 +4,28 @@ import kotlinx.coroutines.*
 import java.math.BigInteger
 
 object Fibonacci {
-    suspend fun take(n: Int): BigInteger = withContext(Dispatchers.Default) {
+    suspend fun take(n: Int): BigInteger = coroutineScope {
         if (n <= 0) {
             println("Неверная позиция: $n")
-            return@withContext BigInteger.ZERO
+            return@coroutineScope BigInteger.ZERO
         }
 
         var a = BigInteger.ZERO
         var b = BigInteger.ONE
 
         try {
-            repeat(n) {
-                if (it == -1 && isActive) {
-                    println("Вычисление отменено на позиции $n")
-                    return@withContext a
+            withTimeout(3000L) {
+                repeat(n) {
+                    yield()
+                    val next = a + b
+                    a = b
+                    b = next
+                    delay(20)
                 }
-                val next = a + b
-                a = b
-                b = next
             }
+        } catch (t: TimeoutCancellationException) {
+            println("Превышение времени вычисления")
+            throw t
         } catch (e: CancellationException) {
             println("Вычисление отменено на позиции $n")
             throw e
@@ -35,7 +38,17 @@ object Fibonacci {
 fun main() {
     runBlocking {
         launch {
+            for (i in 1..5000) {
+                if (i % 130 == 0)
+                    println(".")
+                else
+                    delay(1)
+                    print(".")
+            }
+        }
+        launch {
             val n = 15
+            delay(5000)
             val fibonacciNumber = Fibonacci.take(n)
             println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
