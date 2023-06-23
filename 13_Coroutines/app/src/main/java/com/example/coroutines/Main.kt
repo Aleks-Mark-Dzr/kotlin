@@ -24,7 +24,7 @@ object Fibonacci {
                 }
             }
         } catch (t: TimeoutCancellationException) {
-            println("Превышение времени вычисления")
+            println("Превышение времени вычисления позиции $n")
             throw t
         } catch (e: CancellationException) {
             println("Вычисление отменено на позиции $n")
@@ -39,7 +39,7 @@ object Fibonacci {
 fun main() {
     runBlocking {
         launch {
-            for (i in 1..5000) {
+            for (i in 1..500) {
                 if (i % 130 == 0)
                     println(".")
                 else
@@ -48,12 +48,12 @@ fun main() {
             }
         }
         launch {
-            val n = 15
+            val n = 50
             val fibonacciNumber = Fibonacci.take(n)
             println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
         launch {
-            val n = 16
+            val n = 250
             val fibonacciNumber = Fibonacci.take(n)
             println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
@@ -62,7 +62,5 @@ fun main() {
             val fibonacciNumber = Fibonacci.take(n)
             println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
-        delay(500) // Позволяет некоторое время для выполнения корутин
-        coroutineContext.cancelChildren() // Отменить все корутины
     }
 }
