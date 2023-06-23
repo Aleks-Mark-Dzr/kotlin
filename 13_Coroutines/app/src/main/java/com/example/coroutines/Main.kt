@@ -1,13 +1,13 @@
 package com.example.coroutines
 
+import android.annotation.SuppressLint
 import kotlinx.coroutines.*
 import java.math.BigInteger
 
 object Fibonacci {
-    suspend fun take(n: Int): BigInteger = coroutineScope {
+    suspend fun take(n: Int): BigInteger {
         if (n <= 0) {
             println("Неверная позиция: $n")
-            return@coroutineScope BigInteger.ZERO
         }
 
         var a = BigInteger.ZERO
@@ -30,11 +30,12 @@ object Fibonacci {
             println("Вычисление отменено на позиции $n")
             throw e
         }
-        a
+        return a
     }
 }
 
 
+//@SuppressLint("SuspiciousIndentation")
 fun main() {
     runBlocking {
         launch {
@@ -48,17 +49,16 @@ fun main() {
         }
         launch {
             val n = 15
-            delay(5000)
             val fibonacciNumber = Fibonacci.take(n)
             println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
         launch {
-            val n = 10
+            val n = 16
             val fibonacciNumber = Fibonacci.take(n)
             println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
         launch {
-            val n = -1
+            val n = -17
             val fibonacciNumber = Fibonacci.take(n)
             println("Число Фибоначчи на позиции $n: $fibonacciNumber")
         }
