@@ -26,22 +26,20 @@ class LotoGame(private val players: List<Player>) {
                     // Генерируем случайное число от 1 до 90
                     val randomNumber = Random.nextInt(1, 91)
                     numbersFlow.emit(randomNumber)
-                    delay(1000) // Задержка в 1 секунду между числами
+                    delay(500) // Задержка в 1 секунду между числами
+                    println(randomNumber)
                 }
             }
         }
     }
 
-    fun startGame() = runBlocking {
-        coroutineScope {
-            players.forEach { player ->
-                launch {
-                    // Следим за числами из Flow и проверяем на выигрыш
-                    numbersFlow.collect { number ->
-                        if (player.card.flatten().contains(number)) {
-                            println("${player.name} выиграл(а) число $number в ${System.currentTimeMillis()}")
-                        }
-                    }
+    suspend fun startGame() {
+        players.forEach { player ->
+
+            // Следим за числами из Flow и проверяем на выигрыш
+            numbersFlow.collect { number ->
+                if (player.card.flatten().contains(number)) {
+                    println("${player.name} выиграл(а) число $number в ${System.currentTimeMillis()}")
                 }
             }
         }
@@ -53,7 +51,14 @@ fun main() {
     val player2 = Player("Игрок 2", generateRandomCard())
 
     val game = LotoGame(listOf(player1, player2))
-    game.startGame()
+    runBlocking {
+        launch {
+            delay(200)
+            game.startGame()
+        }
+    }
+    println(player1)
+    println(player2)
 }
 
 fun generateRandomCard(): List<List<Int>> {
@@ -68,6 +73,6 @@ fun generateRandomCard(): List<List<Int>> {
         val row = numbers.subList(it * 9, (it + 1) * 9).sorted().take(5)
         card.add(row)
     }
-
+    println(card)
     return card
 }
