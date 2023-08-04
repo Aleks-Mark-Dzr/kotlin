@@ -1,64 +1,82 @@
 package com.example.a14_flow
 
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import android.app.job.JobParameters
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlin.random.Random
+import kotlinx.coroutines.flow.cancel
 
-data class Player(val name: String, val card: List<List<Int>>)
 
-class LotoGame(private val players: List<Player>) {
+data class Gamer(val name: String, val card: List<List<Int>>, var numberFaund: Int)
 
-    private val numbersFlow = MutableSharedFlow<Int>()
+val gamer1 = Gamer("Игрок 1", generateRandomCard(), 0)
+val gamer2 = Gamer("Игрок 2", generateRandomCard(), 0)
 
-    init {
-        // Генерируем случайные числа и отправляем их в Flow
-        generateRandomNumbers()
+val gamers = listOf<Gamer>(gamer1, gamer2)
+
+var finish = false
+
+
+suspend fun lotoGame() {
+    val numbersFlow = MutableSharedFlow<Int>()
+
+    // Создаем мешок с бочонками лото от 1 до 90 и перемешиваем их
+    val lotoKegs = mutableListOf<Int>()
+    for (i in 1..90) {
+        lotoKegs.add(i)
     }
+    lotoKegs.shuffle()
+//    println(lotoKegs)
 
-    private fun generateRandomNumbers() = runBlocking {
-        coroutineScope {
-            launch {
-                repeat(90) {
-                    // Генерируем случайное число от 1 до 90
-                    val randomNumber = Random.nextInt(1, 91)
-                    numbersFlow.emit(randomNumber)
-                    delay(500) // Задержка в 1 секунду между числами
-                    println(randomNumber)
-                }
+    runBlocking {
+        //Достаем случайный бочонок из мешка и эмитим его в поток
+        launch {
+            while(!finish) {
+                val randomLotoKeg = lotoKegs.random()
+                delay(500)
+                numbersFlow.emit(randomLotoKeg)
+                lotoKegs.remove(randomLotoKeg)
+                println("Выпал бочонок с номером $randomLotoKeg")
+//                println("Остались бочонки с номерами $lotoKegs")
             }
+            cancel()
+            println("Finish $finish")
         }
-    }
 
-    suspend fun startGame() {
-        players.forEach { player ->
-
-            // Следим за числами из Flow и проверяем на выигрыш
-            numbersFlow.collect { number ->
-                if (player.card.flatten().contains(number)) {
-                    println("${player.name} выиграл(а) число $number в ${System.currentTimeMillis()}")
+        launch {
+            numbersFlow.collect() { number ->
+                gamers.forEach { gamer ->
+                    if (gamer.card.flatten().contains(number)) {
+                        gamer.numberFaund++
+                        if (gamer.numberFaund == 15) {
+                            finish = true
+                            cancel()
+//                            return@forEach
+                            println("${gamer.name} выиграл")
+                            println("Игра закончилась - $finish")
+                        }
+                        println("${gamer.name} закрыл поле с номером $number")
+                        println("${gamer.name} закрыл ${gamer.numberFaund} полей")
+                    }
                 }
             }
         }
     }
 }
 
-fun main() {
-    val player1 = Player("Игрок 1", generateRandomCard())
-    val player2 = Player("Игрок 2", generateRandomCard())
 
-    val game = LotoGame(listOf(player1, player2))
+fun main() {
     runBlocking {
         launch {
-            delay(200)
-            game.startGame()
+            delay(500)
+            lotoGame()
+        }
+        launch {
+            println()
+            gamers.forEach { gamer ->
+                println(gamer)
+            }
         }
     }
-    println(player1)
-    println(player2)
 }
 
 fun generateRandomCard(): List<List<Int>> {
@@ -73,6 +91,6 @@ fun generateRandomCard(): List<List<Int>> {
         val row = numbers.subList(it * 9, (it + 1) * 9).sorted().take(5)
         card.add(row)
     }
-    println(card)
+//    println(card)
     return card
 }
